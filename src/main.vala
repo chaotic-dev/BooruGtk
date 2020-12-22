@@ -162,7 +162,7 @@ public class MainWindow : Gtk.ApplicationWindow {
 /* This is the application. */
 public class BooruApplication : Gtk.Application {
 	public BooruApplication() {
-		Object (application_id: "com.github.booru");
+		Object (application_id: "com.github.chaoticdev.booru");
 	}
 	/* Override the 'activate' signal of GLib.Application. */
 	protected override void activate () {
