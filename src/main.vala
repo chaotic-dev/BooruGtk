@@ -14,8 +14,8 @@ public class MainWindow : Gtk.ApplicationWindow {
 	Gtk.Widget video_area;
 	Gtk.EntryCompletion completion;
 
-	internal MainWindow (BooruApplication app) {
-		Object (application: app, title: "Booru");
+	internal MainWindow (BooruGtkApplication app) {
+		Object (application: app, title: "BooruGtk");
 		this.set_default_size (800, 600);
 		
 		accels = new Gtk.AccelGroup ();
@@ -89,9 +89,9 @@ public class MainWindow : Gtk.ApplicationWindow {
 		var save_dialog = new Gtk.FileChooserDialog ("Save File", 
 													this, 
 													Gtk.FileChooserAction.SAVE,
-													Gtk.Stock.CANCEL,
+													"Cancel",
 													Gtk.ResponseType.CANCEL,
-													Gtk.Stock.SAVE,
+													"Save",
 													Gtk.ResponseType.ACCEPT);
 		save_dialog.set_current_name (current_post.filename);
 		save_dialog.set_do_overwrite_confirmation (true);
@@ -107,13 +107,21 @@ public class MainWindow : Gtk.ApplicationWindow {
 			var new_file = file_dialog.get_file ();
 			if (!Cache.file_exists (current_post.filename)) {
 			    var session = new Soup.Session ();
-	            var request = session.request (current_post.file_url);
-	            var write_stream = new_file.replace (null, false, FileCreateFlags.NONE);
-	            write_stream.splice (request.send (), OutputStreamSpliceFlags.CLOSE_SOURCE);
-	            write_stream.close ();
+			    try {
+	                var request = session.request (current_post.file_url);
+	                var write_stream = new_file.replace (null, false, FileCreateFlags.NONE);
+	                write_stream.splice (request.send (), OutputStreamSpliceFlags.CLOSE_SOURCE);
+	                write_stream.close ();
+	            } catch (GLib.Error e) {
+	                stderr.printf ("Error saving file: %s\n", e.message);
+	            }
 			} else {
 				var file = GLib.File.new_for_path (Cache.get_path (current_post.filename));
-				file.copy (new_file, GLib.FileCopyFlags.OVERWRITE);
+				try {
+					file.copy (new_file, GLib.FileCopyFlags.OVERWRITE);
+				} catch (GLib.Error e) {
+	                stderr.printf ("Error copying file from cache: %s\n", e.message);
+	            }
 			}
 		}
 		file_dialog.destroy ();
@@ -134,8 +142,7 @@ public class MainWindow : Gtk.ApplicationWindow {
 	        query = new Api.Query ("");
 	    }
     	var post = query.get_post(index);
-    	stdout.printf (post.sample_url + "\n");
-    	header.set_title ("Booru - %s".printf (post.md5));
+    	header.set_title ("BooruGtk - %s".printf (post.md5));
     	header.set_subtitle (post.tag_string);
     	
     	current_post = post;
@@ -144,7 +151,6 @@ public class MainWindow : Gtk.ApplicationWindow {
     	playbin.set_state (Gst.State.READY);
     	
     	if (post.sample_url.has_suffix (".mp4")) {
-    		
     		video_area.show ();
     		image.hide ();
     		playbin["uri"] = post.sample_url;
@@ -160,9 +166,9 @@ public class MainWindow : Gtk.ApplicationWindow {
 }
 
 /* This is the application. */
-public class BooruApplication : Gtk.Application {
-	public BooruApplication() {
-		Object (application_id: "com.github.chaoticdev.booru");
+public class BooruGtkApplication : Gtk.Application {
+	public BooruGtkApplication() {
+		Object (application_id: "com.github.chaoticdev.boorugtk");
 	}
 	/* Override the 'activate' signal of GLib.Application. */
 	protected override void activate () {
@@ -178,7 +184,7 @@ public int main (string[] args) {
 	// Load GUI
 	Gst.init (ref args);
 	Gtk.init (ref args);
-	return new BooruApplication ().run (args);
+	return new BooruGtkApplication ().run (args);
 }
 
 }

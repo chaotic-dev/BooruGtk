@@ -9,7 +9,7 @@ public class ApplicationHeader : Gtk.HeaderBar {
 
     public ApplicationHeader () {
         this.set_show_close_button (true);
-		this.set_title ("Booru");
+		this.set_title ("BooruGtk");
 		this.set_subtitle ("tags");
 		
 		save_button = new Gtk.Button.with_label ("Save");

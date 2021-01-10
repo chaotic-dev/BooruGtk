@@ -18,8 +18,14 @@ public class Query {
         posts = new List<Post>();
         var session = new Soup.Session ();
         this.tags = tags;
-        var request = session.request ("%s&tags=%s&limit=%u".printf(base_query_url, tags, 1000));
-        var results = new GXml.XDocument.from_stream (request.send ());
+        GXml.XDocument results = null;
+        try {
+	        var request = session.request ("%s&tags=%s&limit=%u".printf(base_query_url, tags, 1000));
+	        results = new GXml.XDocument.from_stream (request.send ());
+	    } catch (GLib.Error e) {
+	        stderr.printf ("%s\n", e.message);
+	        return;
+	    }
         var root = results.document_element;
         total_results = int.parse (root.get_attribute ("count"));
         var children = root.get_elements_by_tag_name ("post");
@@ -32,8 +38,14 @@ public class Query {
         var latest_id = posts.first ().data.id;
         var latest_change = posts.first ().data.change;
         var session = new Soup.Session ();
-        var request = session.request ("%s&tags=%s&cid=%u".printf(base_query_url, tags, latest_change + 1));
-        var results = new GXml.XDocument.from_stream (request.send ());
+        GXml.XDocument results = null;
+        try {
+            var request = session.request ("%s&tags=%s&cid=%u".printf(base_query_url, tags, latest_change + 1));
+            results = new GXml.XDocument.from_stream (request.send ());
+        } catch (GLib.Error e) {
+	        stderr.printf ("%s\n", e.message);
+	        return 0;
+	    }
         var root = results.document_element;
         var new_posts = int.parse (root.get_attribute ("count"));
         if (new_posts > 100) {

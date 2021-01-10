@@ -20,10 +20,18 @@ public abstract class Cache {
         var file = File.new_for_path (file_path);
 	    if (!file.query_exists () || ignore_cached) {
 	        var session = new Soup.Session ();
-	        var request = session.request (url);
-	        var file_stream = file.create (FileCreateFlags.NONE);
-	        file_stream.splice (request.send (), OutputStreamSpliceFlags.CLOSE_SOURCE);
-	        file_stream.close ();
+	        try {
+	            var request = session.request (url);
+	            var file_stream = file.create (FileCreateFlags.NONE);
+	            file_stream.splice (request.send (), OutputStreamSpliceFlags.CLOSE_SOURCE);
+	            file_stream.close ();
+	        } catch (GLib.Error e) {
+	            stderr.printf ("Error saving file: %s\n", e.message);
+	            if (file.query_exists ()) {
+	                file.delete ();
+	            }
+	            return "";
+	        }
 	    }
 	    return file_path;
 	    
