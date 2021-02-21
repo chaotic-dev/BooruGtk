@@ -21,7 +21,28 @@ public class Query {
         GXml.XDocument results = null;
         try {
 	        var request = session.request ("%s&tags=%s&limit=%u".printf(base_query_url, tags, 1000));
-	        results = new GXml.XDocument.from_stream (request.send ());
+	        
+	        // Workaround to remove unsupported named HTML entities
+	        uint8[] buffer = new uint8[4096];
+	        GLib.Regex regex = /&(?!(amp|apos|quot|gt);)\w+;/;
+	        
+	        GLib.InputStream response = request.send ();
+	        GLib.StringBuilder response_builder = new GLib.StringBuilder ();
+	        size_t read = 1;
+	        while (read > 0) {
+	            if (!response.read_all(buffer, out read)) {
+	                stderr.printf("Failed to read response to API query");
+	                break;
+	            }
+	            if (read < buffer.length) {
+	                buffer[read] = 0;
+	            }
+	            response_builder.append ((string) buffer);
+	        }
+	        
+	        string filtered = regex.replace (response_builder.str, response_builder.len, 0, "");
+	        // results = new GXml.XDocument.from_stream (request.send ());
+	        results = new GXml.XDocument.from_string (filtered);
 	    } catch (GLib.Error e) {
 	        stderr.printf ("%s\n", e.message);
 	        return;
