@@ -26,7 +26,7 @@ public abstract class Cache {
 	            file_stream.splice (request.send (), OutputStreamSpliceFlags.CLOSE_SOURCE);
 	            file_stream.close ();
 	        } catch (GLib.Error e) {
-	            stderr.printf ("Error saving file: %s\n", e.message);
+	            stderr.printf ("Error downloading file to cache: %s\nURL: %s\n", e.message, url);
 	            if (file.query_exists ()) {
 	                file.delete ();
 	            }

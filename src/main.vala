@@ -4,15 +4,12 @@ namespace Gui {
 public class MainWindow : Gtk.ApplicationWindow {
 
 	ApplicationHeader header;
-	Gtk.Image image;
 	Api.Query query = null;
 	uint entry = 0;
 	Api.Post current_post = null;
 	Gtk.AccelGroup accels;
-	Gtk.DrawingArea video;
-	Gst.Element playbin;
-	Gtk.Widget video_area;
 	Gtk.EntryCompletion completion;
+	MediaDisplay display;
 
 	internal MainWindow (BooruGtkApplication app) {
 		Object (application: app, title: "BooruGtk");
@@ -33,26 +30,16 @@ public class MainWindow : Gtk.ApplicationWindow {
 		var grid = new Gtk.Grid();
 		var scroll_window = new Gtk.ScrolledWindow (null, null);
 		
-		playbin = Gst.ElementFactory.make ("playbin", "bin");
-		var gtksink = Gst.ElementFactory.make ("gtksink", "sink");
-		gtksink.get ("widget", out video_area);
-		playbin["video-sink"] = gtksink;
-		video_area.set_hexpand (true);
-		video_area.set_vexpand (true);
-		//video_area.show ();
+		display = new MediaDisplay ();
+		display.set_hexpand (true);
+		display.set_vexpand (true);
+		display.show ();
 		
-		image = new Gtk.Image ();
-		image.set_hexpand (true);
-		image.set_vexpand (true);
-		image.show ();
-		
-		// Automatically adds viewport
-		scroll_window.add (image);
+		scroll_window.add (display);
 		scroll_window.show ();
 		
 		this.add(grid);
 		grid.attach(scroll_window, 0, 1, 1, 1);
-		grid.attach_next_to (video_area, scroll_window, Gtk.PositionType.TOP, 1, 1);
 		grid.show ();
 	}
 	
@@ -113,14 +100,15 @@ public class MainWindow : Gtk.ApplicationWindow {
 	                write_stream.splice (request.send (), OutputStreamSpliceFlags.CLOSE_SOURCE);
 	                write_stream.close ();
 	            } catch (GLib.Error e) {
-	                stderr.printf ("Error saving file: %s\n", e.message);
+	                stderr.printf ("Error saving file: %s\nURL: %s\n", e.message, current_post.file_url);
 	            }
 			} else {
-				var file = GLib.File.new_for_path (Cache.get_path (current_post.filename));
+				var fname = Cache.get_path (current_post.filename);
+				var file = GLib.File.new_for_path (fname);
 				try {
 					file.copy (new_file, GLib.FileCopyFlags.OVERWRITE);
 				} catch (GLib.Error e) {
-	                stderr.printf ("Error copying file from cache: %s\n", e.message);
+	                stderr.printf ("Error copying %s from cache: %s\n", fname, e.message);
 	            }
 			}
 		}
@@ -147,20 +135,7 @@ public class MainWindow : Gtk.ApplicationWindow {
     	
     	current_post = post;
     	
-    	playbin["uri"] = "";
-    	playbin.set_state (Gst.State.READY);
-    	
-    	if (post.sample_url.has_suffix (".mp4")) {
-    		video_area.show ();
-    		image.hide ();
-    		playbin["uri"] = post.sample_url;
-    		playbin.set_state (Gst.State.PLAYING);
-    	} else {
-    		image.show ();
-    		video_area.hide ();
-    		string image_path = Cache.get_file (post.sample_url);
-    		image.set_from_file(image_path);
-    	}
+    	display.set_media (post.sample_url);
 	}
 }
 }
