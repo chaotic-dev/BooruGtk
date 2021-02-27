@@ -4,7 +4,7 @@ public class ApplicationHeader : Gtk.HeaderBar {
 
     public Gtk.ToggleButton info_toggle_button { get; private set; }
     public Gtk.Button save_button { get; private set; }
-    public Gtk.Entry search_bar { get; private set; }
+    public Gtk.SearchEntry search_bar { get; private set; }
     public Gtk.Spinner spinner { get; private set; }
 
     public ApplicationHeader () {
@@ -27,9 +27,7 @@ public class ApplicationHeader : Gtk.HeaderBar {
         info_toggle_button.show ();
         this.pack_end (info_toggle_button);
         
-        search_bar = new Gtk.Entry ();
-		search_bar.primary_icon_name = "edit-find";
-		search_bar.editable = true;
+        search_bar = new Gtk.SearchEntry ();
 		search_bar.show ();
 		this.pack_end (search_bar);
         

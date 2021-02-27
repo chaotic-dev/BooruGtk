@@ -10,6 +10,7 @@ public class MainWindow : Gtk.ApplicationWindow {
 	Gtk.AccelGroup accels;
 	Gtk.EntryCompletion completion;
 	MediaDisplay display;
+	string save_dialog_folder = null;
 
 	internal MainWindow (BooruGtkApplication app) {
 		Object (application: app, title: "BooruGtk");
@@ -22,6 +23,7 @@ public class MainWindow : Gtk.ApplicationWindow {
 		header.save_button.clicked.connect (on_save_button_click);
 		header.save_button.add_accelerator ("clicked", accels, Gdk.Key.S, Gdk.ModifierType.CONTROL_MASK, Gtk.AccelFlags.VISIBLE);
 		header.search_bar.activate.connect (on_search_bar_activate);
+		header.search_bar.key_press_event.connect (this.on_search_key_press_event);
 		header.show ();
 		this.set_titlebar (header);
 		
@@ -43,6 +45,13 @@ public class MainWindow : Gtk.ApplicationWindow {
 		grid.show ();
 	}
 	
+	bool on_search_key_press_event (Gdk.EventKey event) {
+        if (event.keyval == Gdk.Key.Escape) {
+            this.set_focus (null);
+        }
+        return false;
+    }
+
 	bool on_key_press_event (Gdk.EventKey event) {
 		if (this.get_focus () == header.search_bar) {
 			return false;
@@ -65,6 +74,9 @@ public class MainWindow : Gtk.ApplicationWindow {
 				    }
 				}
 				break;
+			case Gdk.Key.Escape:
+				this.set_focus (null);
+				break;
 		}
 		return false;
 	}
@@ -80,6 +92,8 @@ public class MainWindow : Gtk.ApplicationWindow {
 													Gtk.ResponseType.CANCEL,
 													"Save",
 													Gtk.ResponseType.ACCEPT);
+		if (save_dialog_folder != null)
+			save_dialog.set_current_folder (save_dialog_folder);
 		save_dialog.set_current_name (current_post.filename);
 		save_dialog.set_do_overwrite_confirmation (true);
 		save_dialog.set_modal (true);
@@ -112,10 +126,12 @@ public class MainWindow : Gtk.ApplicationWindow {
 	            }
 			}
 		}
+		save_dialog_folder = file_dialog.get_current_folder ();
 		file_dialog.destroy ();
 	}
 
 	void on_search_bar_activate (Gtk.Entry search) {
+		this.set_focus (null);
 		header.spinner.start ();
 
     	query = new Api.Query (search.text);
@@ -147,7 +163,6 @@ public class BooruGtkApplication : Gtk.Application {
 	}
 	/* Override the 'activate' signal of GLib.Application. */
 	protected override void activate () {
-		/* Create the window of this application and show it. */
 		var window = new Gui.MainWindow (this);
 		window.show ();
 	}
