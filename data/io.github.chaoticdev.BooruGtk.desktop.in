@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=boorugtk
+Exec=boorugtk
+Terminal=false
+Type=Application
+Categories=GTK;
+StartupNotify=true
