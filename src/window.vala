@@ -106,6 +106,47 @@ namespace Booru {
 	    }
 
 	    [GtkCallback]
+	    private bool on_key_press_event (Gdk.EventKey event) {
+
+            if (this.get_focus () != search_entry && query != null) {
+
+                switch (event.keyval) {
+			        case Gdk.Key.Right:
+				        if (entry < query.total_results - 1) {
+				            load_entry (++entry);
+				        }
+				        return true;
+				        break;
+			        case Gdk.Key.Left:
+				        if (entry > 0) {
+				            load_entry(--entry);
+				        } else {
+					        uint new_posts = query.update ();
+					        if (new_posts > 0) {
+					            stdout.printf ("Loaded %u new post(s)\n", new_posts);
+				                entry = new_posts;
+				                load_entry(--entry);
+				            }
+				        }
+				        return true;
+				        break;
+		        }
+            }
+            if (event.keyval == Gdk.Key.Escape) {
+	            this.set_focus (null);
+	        }
+	        return false;
+	    }
+
+	    [GtkCallback]
+	    private bool on_search_entry_key_press_event (Gdk.EventKey event) {
+            if (event.keyval == Gdk.Key.Escape) {
+                this.set_focus (null);
+            }
+            return false;
+	    }
+
+	    [GtkCallback]
 	    private void on_search_entry_activate (Gtk.Entry search) {
             search.sensitive = false;
             stderr.printf ("Search: %s\n", search.text);
@@ -119,15 +160,22 @@ namespace Booru {
 	            query = new Api.Query ("");
 	        }
 	        var post = query.get_post(index);
-	        if (post != null)
-	            current_post = post;
+	        if (post == null || post == current_post)
+	            return;
+
+	        current_post = post;
+	        entry = index;
+
+	        if (media_stack.get_child_by_name (post.md5) != null) {
+                media_stack.set_visible_child_name (post.md5);
+                return;
+            }
 
             string uri = post.sample_url;
             Gtk.Widget media = null;
             Gst.Element playbin = null;
             if (uri.has_suffix (".mp4")) {
                 playbin = Gst.ElementFactory.make ("playbin", "bin");
-                Gtk.Widget video_area;
                 var gtksink = Gst.ElementFactory.make ("gtksink", "sink");
 		        gtksink.get ("widget", out media);
 		        playbin["video-sink"] = gtksink;

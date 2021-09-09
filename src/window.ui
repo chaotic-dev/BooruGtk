@@ -134,6 +134,7 @@
             <property name="primary-icon-activatable">False</property>
             <property name="primary-icon-sensitive">False</property>
             <signal name="activate" handler="on_search_entry_activate" swapped="no"/>
+            <signal name="key-press-event" handler="on_search_entry_key_press_event" swapped="no"/>
           </object>
           <packing>
             <property name="pack-type">end</property>
@@ -151,5 +152,6 @@
         </child>
       </object>
     </child>
+    <signal name="key-press-event" handler="on_key_press_event" swapped="no"/>
   </template>
 </interface>
